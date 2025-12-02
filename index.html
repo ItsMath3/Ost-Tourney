@@ -369,6 +369,92 @@
             color: #0078d4;
             font-weight: 600;
         }
+
+        /* Table filtering and sorting styles */
+        .table-controls {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #2d2d30;
+            color: #ffffff;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .filter-input:focus {
+            border-color: #0078d4;
+            outline: none;
+        }
+
+        .filter-label {
+            color: #cccccc;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .clear-filters-btn {
+            background: #d13438;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-filters-btn:hover {
+            background: #a4262c;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        .sortable:hover {
+            background: #106ebe;
+        }
+
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .sort-asc::after {
+            content: " ▲";
+        }
+
+        .sort-desc::after {
+            content: " ▼";
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: #1e1e1e;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .table-wrapper {
+            background: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -424,24 +510,31 @@
                     </div>
                 </div>
 
-                <div class="table-container">
-                    <table id="databaseTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Song</th>
-                                <th>Game</th>
-                                <th>Current Rank</th>
-                                <th>ELO</th>
-                                <th>Stars</th>
-                                <th>Matches</th>
-                                <th>Link</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="databaseBody">
-                        </tbody>
-                    </table>
+                <div class="table-wrapper">
+                    <div class="table-controls">
+                        <span class="filter-label">🔍 Filter Database:</span>
+                        <input type="text" id="databaseFilter" class="filter-input" placeholder="Search songs, games, or any field..." oninput="filterDatabase()">
+                        <button class="clear-filters-btn" onclick="clearDatabaseFilter()">Clear Filter</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="databaseTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" onclick="sortDatabase('id')">ID <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('song')">Song <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('game')">Game <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('rank')">Current Rank <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('elo')">ELO <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('stars')">Stars <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortDatabase('matches')">Matches <span class="sort-indicator"></span></th>
+                                    <th>Link</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="databaseBody">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -566,20 +659,27 @@
             <!-- Match History Tab -->
             <div id="history" class="tab-pane">
                 <h2>Match History</h2>
-                <div class="table-container">
-                    <table id="historyTable">
-                        <thead>
-                            <tr>
-                                <th>Date/Time</th>
-                                <th>Type</th>
-                                <th>Winner(s)</th>
-                                <th>Loser(s)</th>
-                                <th>ELO Changes</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyBody">
-                        </tbody>
-                    </table>
+                <div class="table-wrapper">
+                    <div class="table-controls">
+                        <span class="filter-label">🔍 Filter History:</span>
+                        <input type="text" id="historyFilter" class="filter-input" placeholder="Search matches, winners, losers..." oninput="filterHistory()">
+                        <button class="clear-filters-btn" onclick="clearHistoryFilter()">Clear Filter</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" onclick="sortHistory('date')">Date/Time <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortHistory('type')">Type <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortHistory('winners')">Winner(s) <span class="sort-indicator"></span></th>
+                                    <th class="sortable" onclick="sortHistory('losers')">Loser(s) <span class="sort-indicator"></span></th>
+                                    <th>ELO Changes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1086,6 +1186,11 @@
             document.getElementById('songB-card').classList.remove('selected');
             
             alert(`${winnerSong.song} wins! ELO changes: ${winnerSong.song} +${eloChange}, ${loserSong.song} -${eloChange}`);
+            
+            // Auto-start next random match
+            setTimeout(() => {
+                randomMatch();
+            }, 500);
         }
 
         function processThreeWayMatch() {
@@ -1123,7 +1228,7 @@
             ];
             
             // Calculate ELO changes for three-way match
-            const kFactor = 45;
+            const kFactor = 40;
             const eloChanges = {};
             
             participants.forEach(p1 => {
@@ -1179,6 +1284,11 @@
             document.getElementById('voteC').value = '';
             
             alert(`Match processed! ELO changes: ${eloChangeStr}`);
+            
+            // Auto-start next random match
+            setTimeout(() => {
+                randomMatch3();
+            }, 500);
         }
 
         // Auto-match functions
@@ -1512,6 +1622,243 @@
             
             result.push(current.trim());
             return result;
+        }
+
+        // Table sorting and filtering functionality
+        let databaseSortState = { column: null, direction: 'asc' };
+        let historySortState = { column: null, direction: 'asc' };
+        let filteredSongs = [];
+        let filteredHistory = [];
+
+        // Database filtering
+        function filterDatabase() {
+            const filterValue = document.getElementById('databaseFilter').value.toLowerCase();
+            
+            if (!filterValue) {
+                filteredSongs = [...songs];
+            } else {
+                filteredSongs = songs.filter(song => {
+                    return song.song.toLowerCase().includes(filterValue) ||
+                           song.game.toLowerCase().includes(filterValue) ||
+                           song.id.toString().includes(filterValue) ||
+                           song.rank.toString().includes(filterValue) ||
+                           song.elo.toString().includes(filterValue) ||
+                           song.stars.toString().includes(filterValue) ||
+                           song.matches.toString().includes(filterValue);
+                });
+            }
+            
+            renderFilteredDatabase();
+        }
+
+        function clearDatabaseFilter() {
+            document.getElementById('databaseFilter').value = '';
+            filteredSongs = [...songs];
+            renderFilteredDatabase();
+        }
+
+        function renderFilteredDatabase() {
+            const tbody = document.getElementById('databaseBody');
+            tbody.innerHTML = '';
+
+            filteredSongs.forEach(song => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', song.id);
+                
+                const linkDisplay = song.link ? `<a href="${song.link}" target="_blank">YouTube</a>` : '';
+                
+                row.innerHTML = `
+                    <td>${song.id}</td>
+                    <td class="song-cell">${song.song}</td>
+                    <td class="game-cell">${song.game}</td>
+                    <td>${song.rank}</td>
+                    <td>${Math.round(song.elo)}</td>
+                    <td>${createStarsHTML(song.id, song.stars)}</td>
+                    <td>${song.matches}</td>
+                    <td class="link-cell">${linkDisplay}</td>
+                    <td>
+                        <button class="btn edit-btn" onclick="toggleEdit(${song.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteSong(${song.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Database sorting
+        function sortDatabase(column) {
+            // Update sort state
+            if (databaseSortState.column === column) {
+                databaseSortState.direction = databaseSortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                databaseSortState.column = column;
+                databaseSortState.direction = 'asc';
+            }
+
+            // Update sort indicators
+            document.querySelectorAll('#databaseTable .sort-indicator').forEach(indicator => {
+                indicator.className = 'sort-indicator';
+            });
+            
+            const currentHeader = document.querySelector(`#databaseTable th[onclick="sortDatabase('${column}')"] .sort-indicator`);
+            if (currentHeader) {
+                currentHeader.className = `sort-indicator sort-${databaseSortState.direction}`;
+            }
+
+            // Sort the filtered songs array
+            filteredSongs.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch (column) {
+                    case 'id':
+                        valueA = a.id;
+                        valueB = b.id;
+                        break;
+                    case 'song':
+                        valueA = a.song.toLowerCase();
+                        valueB = b.song.toLowerCase();
+                        break;
+                    case 'game':
+                        valueA = a.game.toLowerCase();
+                        valueB = b.game.toLowerCase();
+                        break;
+                    case 'rank':
+                        valueA = a.rank;
+                        valueB = b.rank;
+                        break;
+                    case 'elo':
+                        valueA = a.elo;
+                        valueB = b.elo;
+                        break;
+                    case 'stars':
+                        valueA = a.stars;
+                        valueB = b.stars;
+                        break;
+                    case 'matches':
+                        valueA = a.matches;
+                        valueB = b.matches;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (typeof valueA === 'string') {
+                    return databaseSortState.direction === 'asc' 
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                } else {
+                    return databaseSortState.direction === 'asc' 
+                        ? valueA - valueB
+                        : valueB - valueA;
+                }
+            });
+
+            renderFilteredDatabase();
+        }
+
+        // History filtering
+        function filterHistory() {
+            const filterValue = document.getElementById('historyFilter').value.toLowerCase();
+            
+            if (!filterValue) {
+                filteredHistory = [...matchHistory];
+            } else {
+                filteredHistory = matchHistory.filter(match => {
+                    return match.date.toLowerCase().includes(filterValue) ||
+                           match.type.toLowerCase().includes(filterValue) ||
+                           match.winners.toLowerCase().includes(filterValue) ||
+                           match.losers.toLowerCase().includes(filterValue) ||
+                           match.eloChanges.toLowerCase().includes(filterValue);
+                });
+            }
+            
+            renderFilteredHistory();
+        }
+
+        function clearHistoryFilter() {
+            document.getElementById('historyFilter').value = '';
+            filteredHistory = [...matchHistory];
+            renderFilteredHistory();
+        }
+
+        function renderFilteredHistory() {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+            
+            filteredHistory.forEach(match => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${match.date}</td>
+                    <td>${match.type}</td>
+                    <td>${match.winners}</td>
+                    <td>${match.losers}</td>
+                    <td>${match.eloChanges}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // History sorting
+        function sortHistory(column) {
+            // Update sort state
+            if (historySortState.column === column) {
+                historySortState.direction = historySortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                historySortState.column = column;
+                historySortState.direction = 'asc';
+            }
+
+            // Update sort indicators
+            document.querySelectorAll('#historyTable .sort-indicator').forEach(indicator => {
+                indicator.className = 'sort-indicator';
+            });
+            
+            const currentHeader = document.querySelector(`#historyTable th[onclick="sortHistory('${column}')"] .sort-indicator`);
+            if (currentHeader) {
+                currentHeader.className = `sort-indicator sort-${historySortState.direction}`;
+            }
+
+            // Sort the filtered history array
+            filteredHistory.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch (column) {
+                    case 'date':
+                        valueA = new Date(a.date);
+                        valueB = new Date(b.date);
+                        break;
+                    case 'type':
+                        valueA = a.type.toLowerCase();
+                        valueB = b.type.toLowerCase();
+                        break;
+                    case 'winners':
+                        valueA = a.winners.toLowerCase();
+                        valueB = b.winners.toLowerCase();
+                        break;
+                    case 'losers':
+                        valueA = a.losers.toLowerCase();
+                        valueB = b.losers.toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (valueA instanceof Date) {
+                    return historySortState.direction === 'asc' 
+                        ? valueA - valueB
+                        : valueB - valueA;
+                } else if (typeof valueA === 'string') {
+                    return historySortState.direction === 'asc' 
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                } else {
+                    return historySortState.direction === 'asc' 
+                        ? valueA - valueB
+                        : valueB - valueA;
+                }
+            });
+
+            renderFilteredHistory();
         }
     </script>
 </body>

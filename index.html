@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OST Tourney - ELO Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .tabs {
+            display: flex;
+            background: #2d2d30;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #3c3c3c;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: #484848;
+        }
+
+        .tab.active {
+            background: #0078d4;
+            box-shadow: inset 0 -3px 0 #005a9e;
+        }
+
+        .tab-content {
+            background: #2d2d30;
+            border-radius: 0 0 8px 8px;
+            padding: 30px;
+            min-height: 600px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Database Table Styles */
+        .table-container {
+            overflow-x: auto;
+            background: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+
+        th {
+            background: #0078d4;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #3c3c3c;
+        }
+
+        .editable {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #ffffff;
+            padding: 5px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .editable:focus {
+            border-color: #0078d4;
+            outline: none;
+            background: #1e1e1e;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            color: #404040;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            filter: drop-shadow(0 0 1px rgba(64, 64, 64, 0.3));
+            opacity: 0.3;
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+            color: #ffd700;
+            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.8));
+            opacity: 1;
+        }
+
+        .star.filled {
+            color: #ffd700;
+            opacity: 1;
+            filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5));
+            animation: glitter 2s infinite;
+        }
+
+        @keyframes glitter {
+            0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5)); }
+            50% { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 1)) brightness(1.3); }
+        }
+
+        .btn {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #106ebe;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #d13438;
+        }
+
+        .btn-danger:hover {
+            background: #a4262c;
+        }
+
+        .btn-success {
+            background: #107c10;
+        }
+
+        .btn-success:hover {
+            background: #0e6e0e;
+        }
+
+        .add-song-form {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #2d2d30;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #0078d4;
+            outline: none;
+        }
+
+        .link-cell a {
+            color: #0078d4;
+            text-decoration: none;
+        }
+
+        .link-cell a:hover {
+            text-decoration: underline;
+        }
+
+        /* Match UI Styles */
+        .match-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .match-container.three-way {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .song-card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #404040;
+            transition: all 0.3s ease;
+        }
+
+        .song-card.selected {
+            border-color: #0078d4;
+            box-shadow: 0 0 15px rgba(0, 120, 212, 0.3);
+        }
+
+        .song-select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #2d2d30;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .song-info {
+            display: grid;
+            gap: 10px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #cccccc;
+        }
+
+        .match-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .auto-match-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .winner-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #107c10;
+            color: white;
+        }
+
+        .winner-btn:hover {
+            background: #0e6e0e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 124, 16, 0.4);
+        }
+
+        /* Rankings Styles */
+        .rank-1 {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            font-weight: bold;
+            animation: goldGlitter 3s infinite;
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #cd7f32 0%, #d4af37 100%);
+            color: #000;
+            font-weight: bold;
+        }
+
+        @keyframes goldGlitter {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+        }
+
+        /* Vote dropdown for 1v1v1 */
+        .vote-select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #2d2d30;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .probability {
+            color: #0078d4;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OST Tourney</h1>
+            <p>ELO-based Music Tournament Tracker</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('database')">Database</button>
+            <button class="tab" onclick="showTab('1v1')">1v1</button>
+            <button class="tab" onclick="showTab('1v1v1')">1v1v1</button>
+            <button class="tab" onclick="showTab('rankings')">Rankings</button>
+            <button class="tab" onclick="showTab('history')">Match History</button>
+            <button class="tab" onclick="showTab('import-export')">Import/Export</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Database Tab -->
+            <div id="database" class="tab-pane active">
+                <h2>Song Database</h2>
+                
+                <div class="add-song-form">
+                    <div class="form-group">
+                        <label for="newSong">Song Title</label>
+                        <input type="text" id="newSong" placeholder="Enter song title">
+                    </div>
+                    <div class="form-group">
+                        <label for="newGame">Game</label>
+                        <input type="text" id="newGame" placeholder="Enter game name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newElo">ELO (optional)</label>
+                        <input type="number" id="newElo" placeholder="1200" value="1200">
+                    </div>
+                    <div class="form-group">
+                        <label for="newStars">Stars</label>
+                        <select id="newStars">
+                            <option value="1">1 Star</option>
+                            <option value="2">2 Stars</option>
+                            <option value="3" selected>3 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="5">5 Stars</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newLink">YouTube Link</label>
+                        <input type="url" id="newLink" placeholder="https://youtube.com/...">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-success" onclick="addSong()">Add Song</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="databaseTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Song</th>
+                                <th>Game</th>
+                                <th>Current Rank</th>
+                                <th>ELO</th>
+                                <th>Stars</th>
+                                <th>Matches</th>
+                                <th>Link</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="databaseBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 1v1 Tab -->
+            <div id="1v1" class="tab-pane">
+                <h2>1v1 Match</h2>
+                
+                <div class="match-container">
+                    <div class="song-card" id="songA-card">
+                        <h3>Song A</h3>
+                        <select class="song-select" id="songA-select" onchange="loadSongInfo('A')">
+                            <option value="">Select Song A</option>
+                        </select>
+                        <div class="song-info" id="songA-info"></div>
+                    </div>
+                    
+                    <div class="song-card" id="songB-card">
+                        <h3>Song B</h3>
+                        <select class="song-select" id="songB-select" onchange="loadSongInfo('B')">
+                            <option value="">Select Song B</option>
+                        </select>
+                        <div class="song-info" id="songB-info"></div>
+                    </div>
+                </div>
+
+                <div class="match-buttons">
+                    <button class="winner-btn" onclick="selectWinner('A')">Song A Wins</button>
+                    <button class="winner-btn" onclick="selectWinner('B')">Song B Wins</button>
+                </div>
+
+                <div class="auto-match-buttons">
+                    <button class="btn" onclick="randomMatch()">Random Match</button>
+                    <button class="btn" onclick="closestMatch()">Closest Match</button>
+                    <button class="btn" onclick="rarestMatch()">Rarest Match</button>
+                </div>
+            </div>
+
+            <!-- 1v1v1 Tab -->
+            <div id="1v1v1" class="tab-pane">
+                <h2>1v1v1 Match</h2>
+                
+                <div class="match-container three-way">
+                    <div class="song-card">
+                        <h3>Song A</h3>
+                        <select class="song-select" id="songA3-select" onchange="loadSongInfo3('A')">
+                            <option value="">Select Song A</option>
+                        </select>
+                        <div class="song-info" id="songA3-info"></div>
+                        <select class="vote-select" id="voteA">
+                            <option value="">Select Result</option>
+                            <option value="1.0">Clear Winner</option>
+                            <option value="0.65">Partial Winner</option>
+                            <option value="0.35">Partial Loser</option>
+                            <option value="0.0">Clear Loser</option>
+                        </select>
+                    </div>
+                    
+                    <div class="song-card">
+                        <h3>Song B</h3>
+                        <select class="song-select" id="songB3-select" onchange="loadSongInfo3('B')">
+                            <option value="">Select Song B</option>
+                        </select>
+                        <div class="song-info" id="songB3-info"></div>
+                        <select class="vote-select" id="voteB">
+                            <option value="">Select Result</option>
+                            <option value="1.0">Clear Winner</option>
+                            <option value="0.65">Partial Winner</option>
+                            <option value="0.35">Partial Loser</option>
+                            <option value="0.0">Clear Loser</option>
+                        </select>
+                    </div>
+                    
+                    <div class="song-card">
+                        <h3>Song C</h3>
+                        <select class="song-select" id="songC3-select" onchange="loadSongInfo3('C')">
+                            <option value="">Select Song C</option>
+                        </select>
+                        <div class="song-info" id="songC3-info"></div>
+                        <select class="vote-select" id="voteC">
+                            <option value="">Select Result</option>
+                            <option value="1.0">Clear Winner</option>
+                            <option value="0.65">Partial Winner</option>
+                            <option value="0.35">Partial Loser</option>
+                            <option value="0.0">Clear Loser</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="match-buttons">
+                    <button class="winner-btn" onclick="processThreeWayMatch()">Process Match Results</button>
+                </div>
+
+                <div class="auto-match-buttons">
+                    <button class="btn" onclick="randomMatch3()">Random Match</button>
+                    <button class="btn" onclick="closestMatch3()">Closest Match</button>
+                    <button class="btn" onclick="rarestMatch3()">Rarest Match</button>
+                </div>
+            </div>
+
+            <!-- Rankings Tab -->
+            <div id="rankings" class="tab-pane">
+                <h2>Current Rankings</h2>
+                <div class="table-container">
+                    <table id="rankingsTable">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Song</th>
+                                <th>Game</th>
+                                <th>ELO</th>
+                                <th>Matches</th>
+                                <th>Win Rate</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Match History Tab -->
+            <div id="history" class="tab-pane">
+                <h2>Match History</h2>
+                <div class="table-container">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Type</th>
+                                <th>Winner(s)</th>
+                                <th>Loser(s)</th>
+                                <th>ELO Changes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Import/Export Tab -->
+            <div id="import-export" class="tab-pane">
+                <h2>Import/Export Data</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h3>Database Operations</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn" onclick="downloadDatabaseTemplate()">Download Database Template</button>
+                            <input type="file" id="importDatabase" accept=".csv" style="display: none;" onchange="importDatabase()">
+                            <button class="btn" onclick="document.getElementById('importDatabase').click()">Import Database</button>
+                            <button class="btn btn-success" onclick="exportDatabase()">Export Database</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3>Match History Operations</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn" onclick="downloadHistoryTemplate()">Download History Template</button>
+                            <input type="file" id="importHistory" accept=".csv" style="display: none;" onchange="importHistory()">
+                            <button class="btn" onclick="document.getElementById('importHistory').click()">Import Match History</button>
+                            <button class="btn btn-success" onclick="exportHistory()">Export Match History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let songs = [];
+        let matchHistory = [];
+        let nextId = 1;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDatabase();
+            updateRankings();
+            updateMatchHistory();
+            populateSelects();
+        });
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab panes
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab pane
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Update data when switching tabs
+            if (tabName === 'rankings') {
+                updateRankings();
+            } else if (tabName === 'history') {
+                updateMatchHistory();
+            }
+        }
+
+        // Local storage functions
+        function saveData() {
+            localStorage.setItem('ostTourney_songs', JSON.stringify(songs));
+            localStorage.setItem('ostTourney_history', JSON.stringify(matchHistory));
+            localStorage.setItem('ostTourney_nextId', nextId.toString());
+        }
+
+        function loadData() {
+            const savedSongs = localStorage.getItem('ostTourney_songs');
+            const savedHistory = localStorage.getItem('ostTourney_history');
+            const savedNextId = localStorage.getItem('ostTourney_nextId');
+            
+            if (savedSongs) {
+                songs = JSON.parse(savedSongs);
+            }
+            if (savedHistory) {
+                matchHistory = JSON.parse(savedHistory);
+            }
+            if (savedNextId) {
+                nextId = parseInt(savedNextId);
+            }
+        }
+
+        // Song management functions
+        function addSong() {
+            const songTitle = document.getElementById('newSong').value.trim();
+            const game = document.getElementById('newGame').value.trim();
+            const elo = parseInt(document.getElementById('newElo').value) || 1200;
+            const stars = parseInt(document.getElementById('newStars').value);
+            const link = document.getElementById('newLink').value.trim();
+
+            if (!songTitle || !game) {
+                alert('Please enter both song title and game name.');
+                return;
+            }
+
+            const newSong = {
+                id: nextId++,
+                song: songTitle,
+                game: game,
+                elo: elo,
+                stars: stars,
+                matches: 0,
+                wins: 0,
+                link: link
+            };
+
+            songs.push(newSong);
+            saveData();
+            updateDatabase();
+            updateRankings();
+            populateSelects();
+
+            // Clear form
+            document.getElementById('newSong').value = '';
+            document.getElementById('newGame').value = '';
+            document.getElementById('newElo').value = '1200';
+            document.getElementById('newStars').value = '3';
+            document.getElementById('newLink').value = '';
+        }
+
+        function deleteSong(id) {
+            if (confirm('Are you sure you want to delete this song?')) {
+                songs = songs.filter(song => song.id !== id);
+                saveData();
+                updateDatabase();
+                updateRankings();
+                populateSelects();
+            }
+        }
+
+        function toggleEdit(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const isEditing = row.classList.contains('editing');
+            
+            if (isEditing) {
+                // Save changes
+                const song = songs.find(s => s.id === id);
+                song.song = row.querySelector('.song-edit').value;
+                song.game = row.querySelector('.game-edit').value;
+                song.link = row.querySelector('.link-edit').value;
+                saveData();
+                updateDatabase();
+                updateRankings();
+                populateSelects();
+            } else {
+                // Enter edit mode
+                row.classList.add('editing');
+                const song = songs.find(s => s.id === id);
+                
+                row.querySelector('.song-cell').innerHTML = `<input class="editable song-edit" value="${song.song}">`;
+                row.querySelector('.game-cell').innerHTML = `<input class="editable game-edit" value="${song.game}">`;
+                row.querySelector('.link-cell').innerHTML = `<input class="editable link-edit" value="${song.link}">`;
+                row.querySelector('.edit-btn').textContent = 'Save';
+            }
+        }
+
+        function updateStars(id, rating) {
+            const song = songs.find(s => s.id === id);
+            song.stars = rating;
+            saveData();
+            updateDatabase();
+            
+            // Refresh the match displays if they're currently showing this song
+            refreshMatchDisplays(id);
+        }
+        
+        function refreshMatchDisplays(songId) {
+            // Check 1v1 tab
+            const songAId = parseInt(document.getElementById('songA-select').value);
+            const songBId = parseInt(document.getElementById('songB-select').value);
+            
+            if (songAId === songId) {
+                loadSongInfo('A');
+            }
+            if (songBId === songId) {
+                loadSongInfo('B');
+            }
+            
+            // Check 1v1v1 tab
+            const songA3Id = parseInt(document.getElementById('songA3-select').value);
+            const songB3Id = parseInt(document.getElementById('songB3-select').value);
+            const songC3Id = parseInt(document.getElementById('songC3-select').value);
+            
+            if (songA3Id === songId) {
+                loadSongInfo3('A');
+            }
+            if (songB3Id === songId) {
+                loadSongInfo3('B');
+            }
+            if (songC3Id === songId) {
+                loadSongInfo3('C');
+            }
+        }
+
+        function updateDatabase() {
+            // Sort songs by ELO (highest first) and assign ranks
+            songs.sort((a, b) => b.elo - a.elo);
+            songs.forEach((song, index) => {
+                song.rank = index + 1;
+            });
+
+            const tbody = document.getElementById('databaseBody');
+            tbody.innerHTML = '';
+
+            songs.forEach(song => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', song.id);
+                
+                const linkDisplay = song.link ? `<a href="${song.link}" target="_blank">YouTube</a>` : '';
+                
+                row.innerHTML = `
+                    <td>${song.id}</td>
+                    <td class="song-cell">${song.song}</td>
+                    <td class="game-cell">${song.game}</td>
+                    <td>${song.rank}</td>
+                    <td>${Math.round(song.elo)}</td>
+                    <td>${createStarsHTML(song.id, song.stars)}</td>
+                    <td>${song.matches}</td>
+                    <td class="link-cell">${linkDisplay}</td>
+                    <td>
+                        <button class="btn edit-btn" onclick="toggleEdit(${song.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteSong(${song.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function createStarsHTML(songId, rating) {
+            let html = '<div class="stars">';
+            for (let i = 1; i <= 5; i++) {
+                const filled = i <= rating ? 'filled' : '';
+                html += `<span class="star ${filled}" onclick="updateStars(${songId}, ${i})">★</span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function createStarsElement(songId, rating) {
+            const starsDiv = document.createElement('div');
+            starsDiv.className = 'stars';
+            
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('span');
+                star.className = i <= rating ? 'star filled' : 'star';
+                star.textContent = '★';
+                star.addEventListener('click', function() {
+                    updateStars(songId, i);
+                });
+                starsDiv.appendChild(star);
+            }
+            
+            return starsDiv;
+        }
+
+        // ELO calculation
+        function calculateELO(winnerELO, loserELO, kFactor = 40) {
+            const expectedWin = 1 / (1 + Math.pow(10, (loserELO - winnerELO) / 400));
+            const eloChange = Math.round(kFactor * (1 - expectedWin));
+            return eloChange;
+        }
+
+        function calculateWinProbability(eloA, eloB) {
+            return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+        }
+
+        // 1v1 Match functions
+        function populateSelects() {
+            const selects = ['songA-select', 'songB-select', 'songA3-select', 'songB3-select', 'songC3-select'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                const currentValue = select.value;
+                select.innerHTML = `<option value="">Select Song</option>`;
+                
+                songs.forEach(song => {
+                    const option = document.createElement('option');
+                    option.value = song.id;
+                    option.textContent = `${song.song} (${song.game})`;
+                    select.appendChild(option);
+                });
+                
+                select.value = currentValue;
+            });
+        }
+
+        function loadSongInfo(songLetter) {
+            const selectId = `song${songLetter}-select`;
+            const infoId = `song${songLetter}-info`;
+            const cardId = `song${songLetter}-card`;
+            
+            const songId = parseInt(document.getElementById(selectId).value);
+            const song = songs.find(s => s.id === songId);
+            const infoDiv = document.getElementById(infoId);
+            const card = document.getElementById(cardId);
+            
+            if (!song) {
+                infoDiv.innerHTML = '';
+                card.classList.remove('selected');
+                return;
+            }
+            
+            card.classList.add('selected');
+            
+            // Calculate win probability if both songs are selected
+            let probabilityHTML = '';
+            const otherLetter = songLetter === 'A' ? 'B' : 'A';
+            const otherSongId = parseInt(document.getElementById(`song${otherLetter}-select`).value);
+            const otherSong = songs.find(s => s.id === otherSongId);
+            
+            if (otherSong) {
+                const probability = calculateWinProbability(song.elo, otherSong.elo);
+                probabilityHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Win Probability:</span>
+                        <span class="probability">${(probability * 100).toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+            
+            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Listen on YouTube</a>` : 'No link available';
+            
+            infoDiv.innerHTML = `
+                <div class="info-row">
+                    <span class="info-label">ID:</span>
+                    <span>${song.id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Song:</span>
+                    <input class="editable" value="${song.song}" onchange="updateSongField(${song.id}, 'song', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Game:</span>
+                    <input class="editable" value="${song.game}" onchange="updateSongField(${song.id}, 'game', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Rank:</span>
+                    <span>${song.rank}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current ELO:</span>
+                    <span>${Math.round(song.elo)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Stars:</span>
+                    <span id="stars-container-${songLetter}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Link:</span>
+                    <span>${linkDisplay}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Matches:</span>
+                    <span>${song.matches}</span>
+                </div>
+                ${probabilityHTML}
+            `;
+            
+            // Add the interactive stars element
+            const starsContainer = document.getElementById(`stars-container-${songLetter}`);
+            const starsElement = createStarsElement(song.id, song.stars);
+            starsContainer.appendChild(starsElement);
+        }
+
+        function loadSongInfo3(songLetter) {
+            const selectId = `song${songLetter}3-select`;
+            const infoId = `song${songLetter}3-info`;
+            
+            const songId = parseInt(document.getElementById(selectId).value);
+            const song = songs.find(s => s.id === songId);
+            const infoDiv = document.getElementById(infoId);
+            
+            if (!song) {
+                infoDiv.innerHTML = '';
+                return;
+            }
+            
+            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Listen on YouTube</a>` : 'No link available';
+            
+            infoDiv.innerHTML = `
+                <div class="info-row">
+                    <span class="info-label">ID:</span>
+                    <span>${song.id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Song:</span>
+                    <input class="editable" value="${song.song}" onchange="updateSongField(${song.id}, 'song', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Game:</span>
+                    <input class="editable" value="${song.game}" onchange="updateSongField(${song.id}, 'game', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Rank:</span>
+                    <span>${song.rank}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current ELO:</span>
+                    <span>${Math.round(song.elo)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Stars:</span>
+                    <span id="stars-container-${songLetter}3"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Link:</span>
+                    <span>${linkDisplay}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Matches:</span>
+                    <span>${song.matches}</span>
+                </div>
+            `;
+            
+            // Add the interactive stars element
+            const starsContainer = document.getElementById(`stars-container-${songLetter}3`);
+            const starsElement = createStarsElement(song.id, song.stars);
+            starsContainer.appendChild(starsElement);
+        }
+
+        function updateSongField(id, field, value) {
+            const song = songs.find(s => s.id === id);
+            song[field] = value;
+            saveData();
+            updateDatabase();
+            updateRankings();
+            populateSelects();
+        }
+
+        function selectWinner(winner) {
+            const songAId = parseInt(document.getElementById('songA-select').value);
+            const songBId = parseInt(document.getElementById('songB-select').value);
+            
+            if (!songAId || !songBId) {
+                alert('Please select both songs first.');
+                return;
+            }
+            
+            if (songAId === songBId) {
+                alert('Please select different songs.');
+                return;
+            }
+            
+            const songA = songs.find(s => s.id === songAId);
+            const songB = songs.find(s => s.id === songBId);
+            
+            let winnerSong, loserSong;
+            if (winner === 'A') {
+                winnerSong = songA;
+                loserSong = songB;
+            } else {
+                winnerSong = songB;
+                loserSong = songA;
+            }
+            
+            // Calculate ELO changes
+            const eloChange = calculateELO(winnerSong.elo, loserSong.elo);
+            
+            // Update ELO ratings
+            winnerSong.elo += eloChange;
+            loserSong.elo -= eloChange;
+            
+            // Update match counts and wins
+            winnerSong.matches++;
+            loserSong.matches++;
+            winnerSong.wins++;
+            
+            // Record match history
+            const matchRecord = {
+                date: new Date().toLocaleString(),
+                type: '1v1',
+                winners: winnerSong.song,
+                losers: loserSong.song,
+                eloChanges: `${winnerSong.song}: +${eloChange}, ${loserSong.song}: -${eloChange}`
+            };
+            
+            matchHistory.unshift(matchRecord);
+            
+            saveData();
+            updateDatabase();
+            updateRankings();
+            updateMatchHistory();
+            
+            // Clear selections
+            document.getElementById('songA-select').value = '';
+            document.getElementById('songB-select').value = '';
+            document.getElementById('songA-info').innerHTML = '';
+            document.getElementById('songB-info').innerHTML = '';
+            document.getElementById('songA-card').classList.remove('selected');
+            document.getElementById('songB-card').classList.remove('selected');
+            
+            alert(`${winnerSong.song} wins! ELO changes: ${winnerSong.song} +${eloChange}, ${loserSong.song} -${eloChange}`);
+        }
+
+        function processThreeWayMatch() {
+            const songAId = parseInt(document.getElementById('songA3-select').value);
+            const songBId = parseInt(document.getElementById('songB3-select').value);
+            const songCId = parseInt(document.getElementById('songC3-select').value);
+            
+            const voteA = parseFloat(document.getElementById('voteA').value);
+            const voteB = parseFloat(document.getElementById('voteB').value);
+            const voteC = parseFloat(document.getElementById('voteC').value);
+            
+            if (!songAId || !songBId || !songCId) {
+                alert('Please select all three songs.');
+                return;
+            }
+            
+            if (isNaN(voteA) || isNaN(voteB) || isNaN(voteC)) {
+                alert('Please select results for all three songs.');
+                return;
+            }
+            
+            if (new Set([songAId, songBId, songCId]).size !== 3) {
+                alert('Please select three different songs.');
+                return;
+            }
+            
+            const songA = songs.find(s => s.id === songAId);
+            const songB = songs.find(s => s.id === songBId);
+            const songC = songs.find(s => s.id === songCId);
+            
+            const participants = [
+                { song: songA, score: voteA },
+                { song: songB, score: voteB },
+                { song: songC, score: voteC }
+            ];
+            
+            // Calculate ELO changes for three-way match
+            const kFactor = 45;
+            const eloChanges = {};
+            
+            participants.forEach(p1 => {
+                let totalChange = 0;
+                participants.forEach(p2 => {
+                    if (p1.song.id !== p2.song.id) {
+                        const expected = 1 / (1 + Math.pow(10, (p2.song.elo - p1.song.elo) / 400));
+                        const actual = p1.score > p2.score ? 1 : (p1.score === p2.score ? 0.5 : 0);
+                        totalChange += kFactor * (actual - expected) / 2; // Divide by 2 since we're doing pairwise comparisons
+                    }
+                });
+                eloChanges[p1.song.id] = Math.round(totalChange);
+            });
+            
+            // Apply ELO changes and update match counts
+            participants.forEach(p => {
+                p.song.elo += eloChanges[p.song.id];
+                p.song.matches++;
+                if (p.score >= 0.65) { // Partial or clear winner
+                    p.song.wins++;
+                }
+            });
+            
+            // Record match history
+            const winners = participants.filter(p => p.score >= 0.65).map(p => p.song.song).join(', ');
+            const losers = participants.filter(p => p.score <= 0.35).map(p => p.song.song).join(', ');
+            const eloChangeStr = participants.map(p => `${p.song.song}: ${eloChanges[p.song.id] >= 0 ? '+' : ''}${eloChanges[p.song.id]}`).join(', ');
+            
+            const matchRecord = {
+                date: new Date().toLocaleString(),
+                type: '1v1v1',
+                winners: winners || 'None',
+                losers: losers || 'None',
+                eloChanges: eloChangeStr
+            };
+            
+            matchHistory.unshift(matchRecord);
+            
+            saveData();
+            updateDatabase();
+            updateRankings();
+            updateMatchHistory();
+            
+            // Clear selections
+            document.getElementById('songA3-select').value = '';
+            document.getElementById('songB3-select').value = '';
+            document.getElementById('songC3-select').value = '';
+            document.getElementById('songA3-info').innerHTML = '';
+            document.getElementById('songB3-info').innerHTML = '';
+            document.getElementById('songC3-info').innerHTML = '';
+            document.getElementById('voteA').value = '';
+            document.getElementById('voteB').value = '';
+            document.getElementById('voteC').value = '';
+            
+            alert(`Match processed! ELO changes: ${eloChangeStr}`);
+        }
+
+        // Auto-match functions
+        function randomMatch() {
+            if (songs.length < 2) {
+                alert('Need at least 2 songs for a match.');
+                return;
+            }
+            
+            const shuffled = [...songs].sort(() => 0.5 - Math.random());
+            document.getElementById('songA-select').value = shuffled[0].id;
+            document.getElementById('songB-select').value = shuffled[1].id;
+            loadSongInfo('A');
+            loadSongInfo('B');
+        }
+
+        function closestMatch() {
+            if (songs.length < 2) {
+                alert('Need at least 2 songs for a match.');
+                return;
+            }
+            
+            const randomSong = songs[Math.floor(Math.random() * songs.length)];
+            const sortedByRank = [...songs].sort((a, b) => Math.abs(a.rank - randomSong.rank) - Math.abs(b.rank - randomSong.rank));
+            
+            let opponent = null;
+            for (let song of sortedByRank) {
+                if (song.id !== randomSong.id && Math.abs(song.rank - randomSong.rank) <= 2) {
+                    opponent = song;
+                    break;
+                }
+            }
+            
+            if (!opponent) {
+                opponent = sortedByRank[1]; // Fallback to closest available
+            }
+            
+            document.getElementById('songA-select').value = randomSong.id;
+            document.getElementById('songB-select').value = opponent.id;
+            loadSongInfo('A');
+            loadSongInfo('B');
+        }
+
+        function rarestMatch() {
+            if (songs.length < 2) {
+                alert('Need at least 2 songs for a match.');
+                return;
+            }
+            
+            const sortedByMatches = [...songs].sort((a, b) => a.matches - b.matches);
+            const rarest8 = sortedByMatches.slice(0, Math.min(8, songs.length));
+            const shuffled = rarest8.sort(() => 0.5 - Math.random());
+            
+            document.getElementById('songA-select').value = shuffled[0].id;
+            document.getElementById('songB-select').value = shuffled[1] ? shuffled[1].id : shuffled[0].id;
+            loadSongInfo('A');
+            loadSongInfo('B');
+        }
+
+        function randomMatch3() {
+            if (songs.length < 3) {
+                alert('Need at least 3 songs for a match.');
+                return;
+            }
+            
+            const shuffled = [...songs].sort(() => 0.5 - Math.random());
+            document.getElementById('songA3-select').value = shuffled[0].id;
+            document.getElementById('songB3-select').value = shuffled[1].id;
+            document.getElementById('songC3-select').value = shuffled[2].id;
+            loadSongInfo3('A');
+            loadSongInfo3('B');
+            loadSongInfo3('C');
+        }
+
+        function closestMatch3() {
+            if (songs.length < 3) {
+                alert('Need at least 3 songs for a match.');
+                return;
+            }
+            
+            const randomSong = songs[Math.floor(Math.random() * songs.length)];
+            const sortedByRank = [...songs].sort((a, b) => Math.abs(a.rank - randomSong.rank) - Math.abs(b.rank - randomSong.rank));
+            
+            const closeMatches = sortedByRank.filter(song => 
+                song.id !== randomSong.id && Math.abs(song.rank - randomSong.rank) <= 2
+            ).slice(0, 2);
+            
+            if (closeMatches.length < 2) {
+                // Fallback to closest available
+                closeMatches.push(...sortedByRank.filter(song => 
+                    song.id !== randomSong.id && !closeMatches.includes(song)
+                ).slice(0, 2 - closeMatches.length));
+            }
+            
+            document.getElementById('songA3-select').value = randomSong.id;
+            document.getElementById('songB3-select').value = closeMatches[0].id;
+            document.getElementById('songC3-select').value = closeMatches[1].id;
+            loadSongInfo3('A');
+            loadSongInfo3('B');
+            loadSongInfo3('C');
+        }
+
+        function rarestMatch3() {
+            if (songs.length < 3) {
+                alert('Need at least 3 songs for a match.');
+                return;
+            }
+            
+            const sortedByMatches = [...songs].sort((a, b) => a.matches - b.matches);
+            const rarest8 = sortedByMatches.slice(0, Math.min(8, songs.length));
+            const shuffled = rarest8.sort(() => 0.5 - Math.random());
+            
+            document.getElementById('songA3-select').value = shuffled[0].id;
+            document.getElementById('songB3-select').value = shuffled[1].id;
+            document.getElementById('songC3-select').value = shuffled[2] ? shuffled[2].id : shuffled[0].id;
+            loadSongInfo3('A');
+            loadSongInfo3('B');
+            loadSongInfo3('C');
+        }
+
+        // Rankings functions
+        function updateRankings() {
+            const tbody = document.getElementById('rankingsBody');
+            tbody.innerHTML = '';
+            
+            // Sort by ELO and assign ranks
+            const sortedSongs = [...songs].sort((a, b) => b.elo - a.elo);
+            
+            sortedSongs.forEach((song, index) => {
+                const rank = index + 1;
+                const winRate = song.matches > 0 ? ((song.wins / song.matches) * 100).toFixed(1) : '0.0';
+                const linkDisplay = song.link ? `<a href="${song.link}" target="_blank">YouTube</a>` : '';
+                
+                const row = document.createElement('tr');
+                
+                // Add special styling for top 3
+                if (rank === 1) row.classList.add('rank-1');
+                else if (rank === 2) row.classList.add('rank-2');
+                else if (rank === 3) row.classList.add('rank-3');
+                
+                row.innerHTML = `
+                    <td>${rank}</td>
+                    <td>${song.song}</td>
+                    <td>${song.game}</td>
+                    <td>${Math.round(song.elo)}</td>
+                    <td>${song.matches}</td>
+                    <td>${winRate}%</td>
+                    <td>${linkDisplay}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Match history functions
+        function updateMatchHistory() {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+            
+            matchHistory.forEach(match => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${match.date}</td>
+                    <td>${match.type}</td>
+                    <td>${match.winners}</td>
+                    <td>${match.losers}</td>
+                    <td>${match.eloChanges}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Import/Export functions
+        function downloadDatabaseTemplate() {
+            const csvContent = "id,song,game,elo,stars,matches,wins,link\n1,Example Song,Example Game,1200,3,0,0,https://youtube.com/watch?v=example";
+            downloadCSV(csvContent, 'database_template.csv');
+        }
+
+        function downloadHistoryTemplate() {
+            const csvContent = "date,type,winners,losers,elo_changes\n2024-01-01 12:00:00,1v1,Song A,Song B,Song A: +16 Song B: -16";
+            downloadCSV(csvContent, 'history_template.csv');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function exportDatabase() {
+            let csvContent = "id,song,game,elo,stars,matches,wins,link\n";
+            songs.forEach(song => {
+                csvContent += `${song.id},"${song.song}","${song.game}",${song.elo},${song.stars},${song.matches},${song.wins || 0},"${song.link || ''}"\n`;
+            });
+            downloadCSV(csvContent, 'ost_tourney_database.csv');
+        }
+
+        function exportHistory() {
+            let csvContent = "date,type,winners,losers,elo_changes\n";
+            matchHistory.forEach(match => {
+                csvContent += `"${match.date}","${match.type}","${match.winners}","${match.losers}","${match.eloChanges}"\n`;
+            });
+            downloadCSV(csvContent, 'ost_tourney_history.csv');
+        }
+
+        function importDatabase() {
+            const file = document.getElementById('importDatabase').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    const newSongs = [];
+                    let maxId = 0;
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const values = parseCSVLine(line);
+                        if (values.length >= 6) {
+                            const song = {
+                                id: parseInt(values[0]) || (maxId + 1),
+                                song: values[1] || '',
+                                game: values[2] || '',
+                                elo: parseFloat(values[3]) || 1200,
+                                stars: parseInt(values[4]) || 3,
+                                matches: parseInt(values[5]) || 0,
+                                wins: 0, // Initialize wins to 0 for imported songs
+                                link: ''
+                            };
+                            
+                            // Handle different CSV formats
+                            if (values.length === 7) {
+                                // Format: id,song,game,elo,stars,matches,link
+                                song.link = values[6] || '';
+                            } else if (values.length >= 8) {
+                                // Format: id,song,game,elo,stars,matches,wins,link
+                                song.wins = parseInt(values[6]) || 0;
+                                song.link = values[7] || '';
+                            }
+                            
+                            newSongs.push(song);
+                            maxId = Math.max(maxId, song.id);
+                        }
+                    }
+                    
+                    if (confirm(`Import ${newSongs.length} songs? This will replace the current database.`)) {
+                        songs = newSongs;
+                        nextId = maxId + 1;
+                        saveData();
+                        updateDatabase();
+                        updateRankings();
+                        populateSelects();
+                        alert('Database imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing database: ' + error.message);
+                    console.error('Import error details:', error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function importHistory() {
+            const file = document.getElementById('importHistory').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    const newHistory = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const values = parseCSVLine(line);
+                        if (values.length >= 5) {
+                            const match = {
+                                date: values[0] || '',
+                                type: values[1] || '',
+                                winners: values[2] || '',
+                                losers: values[3] || '',
+                                eloChanges: values[4] || ''
+                            };
+                            newHistory.push(match);
+                        }
+                    }
+                    
+                    if (confirm(`Import ${newHistory.length} match records? This will replace the current match history.`)) {
+                        matchHistory = newHistory;
+                        saveData();
+                        updateMatchHistory();
+                        alert('Match history imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing match history: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            // Detect separator (tab or comma)
+            const separator = line.includes('\t') ? '\t' : ',';
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === separator && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+    </script>
+</body>
+</html>

@@ -539,6 +539,42 @@
             border-color: #0078d4;
             outline: none;
         }
+
+        /* YouTube Embed Styles */
+        .youtube-embed-container {
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1e1e1e;
+            border: 1px solid #404040;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .youtube-embed-container iframe {
+            display: block;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .youtube-embed-error {
+            padding: 20px;
+            text-align: center;
+            color: #cccccc;
+            background: #2d2d30;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #404040;
+        }
+
+        .youtube-embed-error a {
+            color: #0078d4;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .youtube-embed-error a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -1089,7 +1125,9 @@
                 `;
             }
             
-            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Listen on YouTube</a>` : 'No link available';
+            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Open in YouTube</a>` : 'No link available';
+            const videoId = extractYouTubeVideoId(song.link);
+            const youtubeEmbed = videoId ? createYouTubeEmbed(videoId, `youtube-embed-${songLetter}`) : '';
             
             infoDiv.innerHTML = `
                 <div class="info-row">
@@ -1125,6 +1163,7 @@
                     <span>${song.matches}</span>
                 </div>
                 ${probabilityHTML}
+                ${youtubeEmbed}
             `;
             
             // Add the interactive stars element
@@ -1146,7 +1185,9 @@
                 return;
             }
             
-            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Listen on YouTube</a>` : 'No link available';
+            const linkDisplay = song.link ? `<a href="${song.link}" target="_blank" style="color: #0078d4; text-decoration: none; font-weight: 600;">🎵 Open in YouTube</a>` : 'No link available';
+            const videoId = extractYouTubeVideoId(song.link);
+            const youtubeEmbed = videoId ? createYouTubeEmbed(videoId, `youtube-embed-${songLetter}3`) : '';
             
             infoDiv.innerHTML = `
                 <div class="info-row">
@@ -1181,6 +1222,7 @@
                     <span class="info-label">Matches:</span>
                     <span>${song.matches}</span>
                 </div>
+                ${youtubeEmbed}
             `;
             
             // Add the interactive stars element
@@ -1303,7 +1345,7 @@
             ];
             
             // Calculate ELO changes for three-way match
-            const kFactor = 40;
+            const kFactor = 32;
             const eloChanges = {};
             
             participants.forEach(p1 => {
@@ -1708,6 +1750,58 @@
         // Pagination functionality
         let currentPage = 1;
         const itemsPerPage = 100;
+
+        // YouTube embed functionality - Error 153 prevention implementation
+        function extractYouTubeVideoId(url) {
+            if (!url) return null;
+            
+            // Handle various YouTube URL formats
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+                /youtube\.com\/v\/([^&\n?#]+)/,
+                /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        function createYouTubeEmbed(videoId, containerId) {
+            if (!videoId) return '';
+            
+            // Use privacy-enhanced mode and proper parameters to prevent Error 153
+            const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?` +
+                'rel=0&' +                    // Limit related videos
+                'modestbranding=1&' +         // Reduce YouTube branding
+                'controls=1&' +               // Show player controls
+                'showinfo=0&' +               // Hide video info
+                'fs=1&' +                     // Allow fullscreen
+                'cc_load_policy=0&' +         // Don't show captions by default
+                'iv_load_policy=3&' +         // Hide video annotations
+                'autohide=1&' +               // Auto-hide controls
+                'enablejsapi=1&' +            // Enable JavaScript API
+                'origin=' + encodeURIComponent(window.location.origin); // Set proper origin
+            
+            return `
+                <div class="youtube-embed-container" id="${containerId}">
+                    <iframe 
+                        src="${embedUrl}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                        loading="lazy"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                        style="width: 100%; height: 200px; border-radius: 8px;">
+                    </iframe>
+                </div>
+            `;
+        }
 
         // Database filtering
         function filterDatabase() {
